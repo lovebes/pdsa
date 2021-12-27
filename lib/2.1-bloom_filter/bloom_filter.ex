@@ -21,9 +21,13 @@ defmodule ProbabilisticBookReview.BloomFilter do
 
       iex(51)> add("Berlin", 10)
       <<1, 1::size(2)>>
+
+      iex(6)> add("Copenhagen", 10)
+      <<17, 0::size(2)>>
   """
   use Bitwise
   import ProbabilisticBookReview.BinaryHelper
+
   @hash_funcs [&Murmur.hash_x86_32/1, &Fnv1a.hash/1]
 
   def run_all_hash_func(x) do
