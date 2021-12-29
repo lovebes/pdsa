@@ -8,6 +8,19 @@ defmodule ProbabilisticBookReview.BloomFilter.Design do
 
   Choice of m depends on the (estimated) number of elemenst n that are expected to be
   added, and m should be quite large compared to n.
+
+  Widely-used Near-optimal solutions:
+  +----+-----+----------+
+  | k  | m/n | P_fp     |
+  +----+-----+----------+
+  | 4  | 6   | 0.0561   |
+  +----+-----+----------+
+  | 6  | 8   | 0.0215   |
+  +----+-----+----------+
+  | 8  | 12  | 0.00314  |
+  +----+-----+----------+
+  | 11 | 16  | 0.000458 |
+  +----+-----+----------+
   """
 
   @doc """
