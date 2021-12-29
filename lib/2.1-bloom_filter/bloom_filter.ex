@@ -19,11 +19,19 @@ defmodule ProbabilisticBookReview.BloomFilter do
       iex> ProbabilisticBookReview.BloomFilter.add("Rome", 10)
       <<2, 0::size(2)>>
 
-      iex(51)> add("Berlin", 10)
+      iex> add("Berlin", 10)
       <<1, 1::size(2)>>
 
-      iex(6)> add("Copenhagen", 10)
+      iex> add("Copenhagen", 10)
       <<17, 0::size(2)>>
+
+      iex> filter = add("Dublin", 10)
+      iex> filter = add(filter, "Copenhagen")
+      iex> test(filter, "Rome")
+      false
+      iex> test(filter, "Dublin")
+      true
+
   """
   use Bitwise
   import ProbabilisticBookReview.BinaryHelper
