@@ -48,17 +48,57 @@ defmodule ProbabilisticBookReview.BloomFilter do
     end)
   end
 
-  def add(x, m) do
+  def add(x, m) when is_binary(x) and is_integer(m) do
     init = init_bit_str(m)
 
-    add(init, x, m)
+    add(init, x)
   end
 
-  def add(orig, x, m) do
+  def add(orig, x) when is_bitstring(orig) and is_binary(x) do
+    m = bit_size(orig)
+
+    get_bit_array(x, m)
+    |> populate_bit_str(orig, m)
+    |> tap(fn r -> to_list(r) |> IO.inspect(label: "final added") end)
+  end
+
+  defp get_bit_array(x, m) do
     x
     |> run_all_hash_func()
     |> map_to_modulo(m)
-    |> populate_bit_str(orig, m)
-    |> tap(fn r -> inspect(r, base: :binary) end)
+  end
+
+  def test(filter, x) do
+    m = bit_size(filter)
+
+    x
+    |> get_bit_array(m)
+    |> bits_in_filter?(filter)
+  end
+
+  def bits_in_filter?(modulo_list, filter) do
+    init_bit_str =
+      filter
+      |> bit_size()
+      |> init_bit_str()
+
+    padded_filter =
+      filter
+      |> IO.inspect(label: "filter")
+      |> tap(fn r -> to_list(r) |> IO.inspect(label: "filter") end)
+      |> pad_to_binary()
+      |> :binary.decode_unsigned()
+
+    padded_hashed =
+      modulo_list
+      |> Enum.reduce(init_bit_str, fn curr, acc ->
+        mark_bit_str(acc, curr)
+      end)
+      |> IO.inspect(label: "hashed value to compare")
+      |> tap(fn r -> to_list(r) |> IO.inspect(label: "hashed modulo list") end)
+      |> pad_to_binary()
+      |> :binary.decode_unsigned()
+
+    padded_hashed == (padded_hashed &&& padded_filter)
   end
 end
