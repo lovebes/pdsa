@@ -109,4 +109,27 @@ defmodule ProbabilisticBookReview.BloomFilter do
 
     padded_hashed == (padded_hashed &&& padded_filter)
   end
+
+  @doc """
+  Count unique elements in the filter.
+  Due to nature of false positives of Bloom filters, this is an estimate.
+
+  Since identical elemtns added into the filter won't change the number of bits,
+  this will return estimation for number of unique elements, otherwise known
+  as `cardinality`.
+
+  This is an extension of Linear Counting algorithm.
+  """
+  def unique_elements(filter, k) do
+    m = bit_size(filter)
+    counted = for(<<bit::1 <- filter>>, do: bit) |> Enum.sum()
+
+    cond do
+      counted < k -> 0
+      counted == k -> 1
+      counted == m -> m / k
+      true -> -m / k * :math.log(1 - counted / m)
+    end
+    |> round()
+  end
 end
