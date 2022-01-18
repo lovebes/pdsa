@@ -50,12 +50,6 @@ defmodule ProbabilisticBookReview.QuotientFilter do
     {<<0::1, 0::1, 0::1>>, value}
   end
 
-  def init_bucket_list(bucket_length) do
-    for _n <- 1..bucket_length do
-      init_bucket(nil)
-    end
-  end
-
   def update_metadata_flag({metadata, stored_value} = _bucket, type, boolean_value)
       when is_boolean(boolean_value) do
     {boolean_value
@@ -88,5 +82,23 @@ defmodule ProbabilisticBookReview.QuotientFilter do
 
   def update_bucket_value({metadata, _value} = _bucket, new_bucket_value) do
     {metadata, new_bucket_value}
+  end
+
+  # bucket list functions
+
+  def init_bucket_list(bucket_length) do
+    for _n <- 1..bucket_length do
+      init_bucket(nil)
+    end
+  end
+
+  def value_at_bucket_list_idx(bucket_list, idx) do
+    bucket_list
+    |> Enum.at(idx)
+    |> then(fn {_metadata, value} -> value end)
+  end
+
+  def update_bucket_at(bucket_list, bucket, idx) do
+    List.replace_at(bucket_list, idx, bucket)
   end
 end
