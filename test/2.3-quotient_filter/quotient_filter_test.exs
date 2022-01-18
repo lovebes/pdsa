@@ -46,4 +46,20 @@ defmodule ProbabilisticBookReview.QuotientFilterTest do
                |> update_metadata_flag(:is_shifted, false)
     end
   end
+
+  describe "update_bucket_value" do
+    setup do
+      total_bits = 32
+      f = Murmur.hash_x86_32("Copenhagen")
+      q = 3
+      {f_q, f_r} = quotient(f, total_bits, q)
+      [f_q: f_q, f_r: f_r]
+    end
+
+    test "updates value in bucket", %{f_q: _f_q, f_r: f_r} do
+      bucket = init_bucket(f_r)
+      new_val = 333_333_333
+      assert {_metadata, ^new_val} = update_bucket_value(bucket, new_val)
+    end
+  end
 end

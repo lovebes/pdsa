@@ -50,7 +50,7 @@ defmodule ProbabilisticBookReview.QuotientFilter do
     {<<0::1, 0::1, 0::1>>, value}
   end
 
-  def update_metadata_flag({metadata, stored_value} = bucket, type, boolean_value)
+  def update_metadata_flag({metadata, stored_value} = _bucket, type, boolean_value)
       when is_boolean(boolean_value) do
     {boolean_value
      |> boolean_to_integer()
@@ -78,5 +78,9 @@ defmodule ProbabilisticBookReview.QuotientFilter do
   def set_metadata_flag(<<rest::2, _is_shifted::1>>, :is_shifted, value)
       when is_integer(value) do
     <<rest::2, value::1>>
+  end
+
+  def update_bucket_value({metadata, _value} = _bucket, new_bucket_value) do
+    {metadata, new_bucket_value}
   end
 end
