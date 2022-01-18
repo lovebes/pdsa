@@ -50,6 +50,12 @@ defmodule ProbabilisticBookReview.QuotientFilter do
     {<<0::1, 0::1, 0::1>>, value}
   end
 
+  def init_bucket_list(bucket_length) do
+    for _n <- 1..bucket_length do
+      init_bucket(nil)
+    end
+  end
+
   def update_metadata_flag({metadata, stored_value} = _bucket, type, boolean_value)
       when is_boolean(boolean_value) do
     {boolean_value

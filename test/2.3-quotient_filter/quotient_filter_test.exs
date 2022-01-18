@@ -62,4 +62,22 @@ defmodule ProbabilisticBookReview.QuotientFilterTest do
       assert {_metadata, ^new_val} = update_bucket_value(bucket, new_val)
     end
   end
+
+  describe "init_bucket_list" do
+    setup do
+      total_bits = 32
+      f = Murmur.hash_x86_32("Copenhagen")
+      q = 3
+      {f_q, f_r} = quotient(f, total_bits, q)
+      [f_q: f_q, f_r: f_r]
+    end
+
+    test "should create list" do
+      init_metadata = <<0::1, 0::1, 0::1>>
+      assert init_bucket_list(3) |> length == 3
+
+      assert init_bucket_list(8)
+             |> Enum.all?(fn {metadata, value} -> init_metadata == metadata && is_nil(value) end)
+    end
+  end
 end
