@@ -88,17 +88,62 @@ defmodule ProbabilisticBookReview.QuotientFilter do
 
   def init_bucket_list(bucket_length) do
     for _n <- 1..bucket_length do
-      init_bucket(nil)
+      nil
     end
   end
 
-  def value_at_bucket_list_idx(bucket_list, idx) do
+  def value_at_bucket_list(bucket_list, idx) do
     bucket_list
     |> Enum.at(idx)
     |> then(fn {_metadata, value} -> value end)
   end
 
+  def size_of_bucket_list(bucket_list) do
+    bucket_list |> length
+  end
+
   def update_bucket_at(bucket_list, bucket, idx) do
     List.replace_at(bucket_list, idx, bucket)
+  end
+
+  @doc """
+  Right shifts the buckets in queue with respective to incoming bucket index.
+
+  ## When to use:
+  If f_q_ is the same, then there is a soft collision.
+
+  Resolve by using this function which will put the incoming bucket into the already
+  occupying position in queue, and then shift the original bucket
+  to the next sequential position in queue.
+
+  ## Outcome:
+  This action sets `is_continuation`, `is_shifted` bits to 1.
+
+  """
+  def right_shift_queue(bucket_list, idx) do
+    prev = bucket_list |> value_at_bucket_list(idx)
+
+    i = idx + 1
+
+    do_right_shift(bucket_list, i, value_at_bucket_list(bucket_list, i), prev)
+  end
+
+  defp do_right_shift(bucket_list, i, nil, prev) do
+    prepped_for_insert =
+      prev
+      |> update_metadata_flag(:is_continuation, true)
+      |> update_metadata_flag(:is_shifted, true)
+
+    bucket_list |> update_bucket_at(prepped_for_insert, i)
+  end
+
+  defp do_right_shift(bucket_list, i, curr, prev) do
+    m = size_of_bucket_list(bucket_list)
+    updated_bucket_list = bucket_list |> update_bucket_at(prev, i)
+
+    prev = curr
+    next_i = if i + 1 > m, do: 0, else: i + 1
+    next_curr = updated_bucket_list |> value_at_bucket_list(next_i)
+    do_right_shift(updated_bucket_list, next_i, next_curr, prev)
   end
 end
