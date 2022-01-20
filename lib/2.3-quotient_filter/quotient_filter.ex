@@ -92,10 +92,9 @@ defmodule ProbabilisticBookReview.QuotientFilter do
     end
   end
 
-  def value_at_bucket_list(bucket_list, idx) do
+  def bucket_at_bucket_list(bucket_list, idx) do
     bucket_list
     |> Enum.at(idx)
-    |> then(fn {_metadata, value} -> value end)
   end
 
   def size_of_bucket_list(bucket_list) do
@@ -116,16 +115,21 @@ defmodule ProbabilisticBookReview.QuotientFilter do
   occupying position in queue, and then shift the original bucket
   to the next sequential position in queue.
 
+  ## NOTE: this does not clean up the bucket at the previous position.
+  It is the responsibility of the caller of this function to update
+  the target position with a bucket. If not, the resulting bucket will
+  keep that bucket in place (one at incoming index)
+
   ## Outcome:
   This action sets `is_continuation`, `is_shifted` bits to 1.
 
   """
   def right_shift_queue(bucket_list, idx) do
-    prev = bucket_list |> value_at_bucket_list(idx)
+    prev = bucket_list |> bucket_at_bucket_list(idx)
 
     i = idx + 1
 
-    do_right_shift(bucket_list, i, value_at_bucket_list(bucket_list, i), prev)
+    do_right_shift(bucket_list, i, bucket_at_bucket_list(bucket_list, i), prev)
   end
 
   defp do_right_shift(bucket_list, i, nil, prev) do
@@ -143,7 +147,7 @@ defmodule ProbabilisticBookReview.QuotientFilter do
 
     prev = curr
     next_i = if i + 1 > m, do: 0, else: i + 1
-    next_curr = updated_bucket_list |> value_at_bucket_list(next_i)
+    next_curr = updated_bucket_list |> bucket_at_bucket_list(next_i)
     do_right_shift(updated_bucket_list, next_i, next_curr, prev)
   end
 end
