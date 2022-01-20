@@ -20,9 +20,24 @@ defmodule ProbabilisticBookReview.QuotientFilter do
   suggested by Donald Knuth.
 
   Returns {f_q, f_r}, product of the quotient technique (div, rem)
+
   Conditions:
   ============
   * |fingerprint| > num_total_bits
+
+  ## Explanation of metadata flags is `1` if:
+  `is_occupied`: the index of the bucket list has been filled
+    - it might end up somewhere to the right of the "correct" position (aka "canonical" bucket),
+      but we still flip the bit at the index of the canonical bucket
+
+  `is_shifted`: Flips in the bucket in question.
+    Flips to `1` whenever a bucket has to shift due to inserting new bucket into the queue.
+
+  `is_continuation`: flips to `1` if and only if canonical bucket is occupied,
+    and then a subsequent bucket falls in the same canonical bucket index.
+    - This is a case for right-shifting buckets.
+    - The bit flips on the bucket being inserted.
+
 
   """
   @spec quotient(fingerprint :: integer(), num_total_bits :: integer(), num_q_bits :: integer()) ::
@@ -108,14 +123,16 @@ defmodule ProbabilisticBookReview.QuotientFilter do
   end
 
   @doc """
-  Right shifts the buckets in queue with respective to incoming bucket index.
+  Right shifts the buckets in bucket list with respective to incoming bucket index.
+  Expectation is the usage of this function follows the Quotient filter
+  rules for performing right shift.
 
   ## When to use:
   If f_q_ is the same, then there is a soft collision.
 
   Resolve by using this function which will put the incoming bucket into the already
-  occupying position in queue, and then shift the original bucket
-  to the next sequential position in queue.
+  occupying position in bucket list, and then shift the original bucket
+  to the next sequential position in bucket list.
 
   ## NOTE: this does not clean up the bucket at the previous position.
   It is the responsibility of the caller of this function to update
@@ -126,7 +143,7 @@ defmodule ProbabilisticBookReview.QuotientFilter do
   This action sets `is_continuation`, `is_shifted` bits to 1.
 
   """
-  def right_shift_queue(bucket_list, idx) do
+  def right_shift_buckets(bucket_list, idx) do
     prev = bucket_list |> bucket_at_bucket_list(idx)
 
     i = idx + 1
