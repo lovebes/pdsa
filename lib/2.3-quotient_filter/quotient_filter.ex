@@ -84,11 +84,13 @@ defmodule ProbabilisticBookReview.QuotientFilter do
     {metadata, new_bucket_value}
   end
 
+  def bucket_value({_metadata, value}), do: value
+
   # bucket list functions
 
   def init_bucket_list(bucket_length) do
     for _n <- 1..bucket_length do
-      nil
+      init_bucket(nil)
     end
   end
 
@@ -132,7 +134,7 @@ defmodule ProbabilisticBookReview.QuotientFilter do
     do_right_shift(bucket_list, i, bucket_at_bucket_list(bucket_list, i), prev)
   end
 
-  defp do_right_shift(bucket_list, i, nil, prev) do
+  defp do_right_shift(bucket_list, i, {_metadata, nil}, prev) do
     prepped_for_insert =
       prev
       |> update_metadata_flag(:is_continuation, true)
