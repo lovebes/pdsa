@@ -61,6 +61,8 @@ defmodule ProbabilisticBookReview.QuotientFilter do
     rem(hash, r)
   end
 
+  # Bucket operations
+
   def init_bucket(value) do
     {<<0::1, 0::1, 0::1>>, value}
   end
@@ -100,6 +102,14 @@ defmodule ProbabilisticBookReview.QuotientFilter do
   end
 
   def bucket_value({_metadata, value}), do: value
+
+  @doc """
+  Checks if the value in a bucket is empty.
+
+  In this concept, "empty" means if the value is `nil`.
+  """
+  def is_bucket_value_empty?({_metadata, nil}), do: true
+  def is_bucket_value_empty?({_metadata, _rest}), do: false
 
   # bucket list functions
 
@@ -168,5 +178,24 @@ defmodule ProbabilisticBookReview.QuotientFilter do
     next_i = if i + 1 > m, do: 0, else: i + 1
     next_curr = updated_bucket_list |> bucket_at_bucket_list(next_i)
     do_right_shift(updated_bucket_list, next_i, next_curr, prev)
+  end
+
+  @doc """
+  Scanning the Quotient filter to find the run
+
+  Starts by walking backward from canonical bucket for _f_ to find the beginning of the cluster.
+  As soon as the cluster's start is found,
+  it goes forward again
+  to find the location of the first remainder for the bucket _f_q_,
+  that is the actual start of the run _r_start_.
+
+  ## A "cluster":
+  Sequence of one or more consecutive runs with no empty buckets.
+  This shows these properties:
+    * All clusters are immediately preceded by an empty bucket
+    * `is_shifted` bit of its first value (ie. first bucket of cluster) is _never set_.
+
+  """
+  def scan_for_run(bucket_list) do
   end
 end
