@@ -38,6 +38,12 @@ defmodule ProbabilisticBookReview.QuotientFilter do
     - This is a case for right-shifting buckets.
     - The bit flips on the bucket being inserted.
 
+  ## Metadata flags structure
+  - `<<is_occupied::1, is_continuation::1, is_shifted::1>>
+
+  ## Glossary
+  * `bucket_list`: Quotient filter
+    - named this way throughout the module because suggested implementation is a list/array
 
   """
   @spec quotient(fingerprint :: integer(), num_total_bits :: integer(), num_q_bits :: integer()) ::
@@ -195,7 +201,40 @@ defmodule ProbabilisticBookReview.QuotientFilter do
     * All clusters are immediately preceded by an empty bucket
     * `is_shifted` bit of its first value (ie. first bucket of cluster) is _never set_.
 
+  ## Argument explanation
+    * `f_q`: canonical bucet index _f_q_ of the quotient filter(`bucket_list`)
+      - f_q is incremental, 0 to [whatever modulus was used] - 1
+    * `bucket_list`: Quotient filter
+
   """
-  def scan_for_run(bucket_list) do
+  def scan_for_run(f_q, bucket_list) do
+    bucket_at_idx = bucket_at_bucket_list(bucket_list, f_q)
+    idx = f_q
+
+    do_scan_for_run(bucket_at_idx, idx, f_q, bucket_list)
+  end
+
+  defp do_scan_for_run({<<_::2, 1::1>>, _value}, idx, f_q, bucket_list) do
+    # case for when is_shifted flag is 1
+    next_bucket = bucket_at_bucket_list(bucket_list, idx - 1)
+    do_scan_for_run(next_bucket, idx - 1, f_q, bucket_list)
+  end
+
+  defp do_scan_for_run(_bucket, f_q, f_q, bucket_list) do
+    # fucntion is case for when if idx == f_q
+    r_start = f_q
+    r_end = r_start
+
+    r_end = do_get_run_end(bucket_at_bucket_list(bucket_list, r_end), r_end, bucket_list)
+
+    {r_start, r_end}
+  end
+
+  defp do_get_run_end({<<_::1, 0::1, _::1>>, _value}, r_end, _bucket_list) do
+    r_end
+  end
+
+  defp do_get_run_end({<<_::1, 1::1, _::1>>, _value}, r_end, bucket_list) do
+    do_get_run_end(bucket_at_bucket_list(bucket_list, r_end + 1), r_end + 1, bucket_list)
   end
 end
