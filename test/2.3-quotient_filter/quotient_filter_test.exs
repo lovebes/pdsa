@@ -60,7 +60,7 @@ defmodule ProbabilisticBookReview.QuotientFilterTest do
       init_metadata = <<0::1, 0::1, 0::1>>
       assert init_bucket_list(3) |> length == 3
 
-      assert init_bucket_list(8) |> Enum.all?(&is_nil(&1))
+      assert init_bucket_list(8) |> Enum.all?(&(&1 |> elem(1) |> is_nil))
     end
   end
 
@@ -83,6 +83,25 @@ defmodule ProbabilisticBookReview.QuotientFilterTest do
       |> right_shift_buckets(0)
       |> update_bucket_at(bucket4, 0)
       |> IO.inspect()
+    end
+  end
+
+  describe "scan_for_run/2" do
+    test "correctly scans for a run" do
+      bucket_list = [
+        {<<1::1, 0::1, 0::1>>, 3},
+        {<<0::3>>, nil},
+        {<<1::1, 0::1, 0::1>>, 4},
+        {<<1::1, 1::1, 1::1>>, 5},
+        {<<1::1, 1::1, 1::1>>, 6},
+        {<<0::3>>, nil},
+        {<<0::3>>, nil},
+        {<<0::3>>, nil}
+      ]
+
+      r_start = 2
+      r_end = 4
+      assert {r_start, r_end} = scan_for_run(3, bucket_list)
     end
   end
 end
