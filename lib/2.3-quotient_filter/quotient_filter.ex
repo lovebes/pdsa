@@ -29,6 +29,7 @@ defmodule ProbabilisticBookReview.QuotientFilter do
   `is_occupied`: the index of the bucket list has been filled
     - it might end up somewhere to the right of the "correct" position (aka "canonical" bucket),
       but we still flip the bit at the index of the canonical bucket
+    - Important!: this flag is set at the bucket at the canonical index
 
   `is_shifted`: Flips in the bucket in question.
     Flips to `1` whenever a bucket has to shift due to inserting new bucket into the queue.
@@ -209,32 +210,61 @@ defmodule ProbabilisticBookReview.QuotientFilter do
   """
   def scan_for_run(f_q, bucket_list) do
     bucket_at_idx = bucket_at_bucket_list(bucket_list, f_q)
-    idx = f_q
 
-    do_scan_for_run(bucket_at_idx, idx, f_q, bucket_list)
-  end
+    r_start = get_start_of_cluster(bucket_at_idx, f_q, bucket_list)
+    idx = r_start
 
-  defp do_scan_for_run({<<_::2, 1::1>>, _value}, idx, f_q, bucket_list) do
-    # case for when is_shifted flag is 1
-    next_bucket = bucket_at_bucket_list(bucket_list, idx - 1)
-    do_scan_for_run(next_bucket, idx - 1, f_q, bucket_list)
-  end
+    r_start = walk_to_get_f_q_run_start(bucket_list, f_q, idx, r_start)
 
-  defp do_scan_for_run(_bucket, f_q, f_q, bucket_list) do
-    # fucntion is case for when if idx == f_q
-    r_start = f_q
-    r_end = r_start
-
+    r_end = r_start + 1
     r_end = do_get_run_end(bucket_at_bucket_list(bucket_list, r_end), r_end, bucket_list)
 
     {r_start, r_end}
+  end
+
+  defp walk_to_get_f_q_run_start(_bucket_list, f_q, f_q, r_start) do
+    r_start
+  end
+
+  defp walk_to_get_f_q_run_start(bucket_list, f_q, idx, r_start) do
+    r_start = r_start + 1
+    r_start = to_next_run_start(bucket_at_bucket_list(bucket_list, r_start), r_start, bucket_list)
+
+    idx = idx + 1
+    idx = to_next_canonical_bucket(bucket_at_bucket_list(bucket_list, idx), idx, bucket_list)
+
+    walk_to_get_f_q_run_start(bucket_list, f_q, idx, r_start)
+  end
+
+  defp to_next_canonical_bucket({<<1::1, _::2>>, _value}, idx, _bucket_list) do
+    idx
+  end
+
+  defp to_next_canonical_bucket(_, idx, bucket_list) do
+    to_next_canonical_bucket(bucket_at_bucket_list(bucket_list, idx + 1), idx + 1, bucket_list)
+  end
+
+  defp to_next_run_start({<<_::1, 0::1, _::0>>, _value}, r_start, _bucket_list) do
+    r_start
+  end
+
+  defp to_next_run_start(_, r_start, bucket_list) do
+    to_next_run_start(bucket_at_bucket_list(bucket_list, r_start + 1), r_start + 1, bucket_list)
+  end
+
+  defp get_start_of_cluster({<<_::2, 1::1>>, _value}, idx, bucket_list) do
+    get_start_of_cluster(bucket_at_bucket_list(bucket_list, idx - 1), idx - 1, bucket_list)
+  end
+
+  defp get_start_of_cluster(_bucket, idx, _bucket_list) do
+    idx
   end
 
   defp do_get_run_end({<<_::1, 0::1, _::1>>, _value}, r_end, _bucket_list) do
     r_end
   end
 
-  defp do_get_run_end({<<_::1, 1::1, _::1>>, _value}, r_end, bucket_list) do
+  defp do_get_run_end(_bucket, r_end, bucket_list) do
     do_get_run_end(bucket_at_bucket_list(bucket_list, r_end + 1), r_end + 1, bucket_list)
   end
 end
