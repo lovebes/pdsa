@@ -214,6 +214,8 @@ defmodule ProbabilisticBookReview.QuotientFilter do
     r_start = get_start_of_cluster(bucket_at_idx, f_q, bucket_list)
     idx = r_start
 
+    # now walk r_start and idx until idx reaches f_q, makeing r_start land on f_q (if run starts there)
+    # or go past it to get to the correct run belonging to f_q
     r_start = walk_to_get_f_q_run_start(bucket_list, f_q, idx, r_start)
 
     r_end = r_start + 1
