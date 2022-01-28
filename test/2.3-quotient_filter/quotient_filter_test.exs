@@ -75,33 +75,39 @@ defmodule ProbabilisticBookReview.QuotientFilterTest do
         init_bucket_list(8)
         |> update_bucket_at(bucket1, 0)
         |> update_bucket_at(bucket2, 2)
-        |> IO.inspect(label: "initial")
 
       right_shift_buckets(bucket_list, 0)
       |> update_bucket_at(bucket3, 0)
-      |> IO.inspect()
       |> right_shift_buckets(0)
       |> update_bucket_at(bucket4, 0)
-      |> IO.inspect()
     end
   end
 
   describe "scan_for_run/2" do
     test "correctly scans for a run" do
+      # idx 1-5 is a cluster (inclusive)
+      # idx 1-3 is a run (inclusive)
+      # idx 4, idx 5 are single element runs
       bucket_list = [
-        {<<1::1, 0::1, 0::1>>, 3},
-        {<<0::3>>, nil},
-        {<<1::1, 0::1, 0::1>>, 4},
-        {<<1::1, 1::1, 1::1>>, 5},
-        {<<1::1, 1::1, 1::1>>, 6},
-        {<<0::3>>, nil},
-        {<<0::3>>, nil},
-        {<<0::3>>, nil}
+        init_bucket(),
+        {flags(1, 0, 0), :value1},
+        {flags(1, 1, 1), :value2},
+        {flags(0, 1, 1), :value3},
+        {flags(1, 0, 1), :value4},
+        {flags(0, 0, 1), :value5},
+        init_bucket(),
+        {flags(1, 0, 0), :value7}
       ]
 
-      r_start = 2
-      r_end = 4
-      assert {r_start, r_end} = scan_for_run(3, bucket_list)
+      {r_start, r_end} = scan_for_run(bucket_list, 2)
+      # so f_q is 2, which in bucket_list - is still the run for canonical bucket index 1.
+      # therefore the function will scan to get to idx: 4
+      assert {4, 5} = {r_start, r_end}
     end
+  end
+
+  defp flags(is_occupied, is_continuation, is_shifted)
+       when is_integer(is_occupied) and is_integer(is_continuation) and is_integer(is_shifted) do
+    <<is_occupied::1, is_continuation::1, is_shifted::1>>
   end
 end
