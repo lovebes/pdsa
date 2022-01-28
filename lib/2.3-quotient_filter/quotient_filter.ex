@@ -70,7 +70,7 @@ defmodule ProbabilisticBookReview.QuotientFilter do
 
   # Bucket operations
 
-  def init_bucket(value) do
+  def init_bucket(value \\ nil) do
     {<<0::1, 0::1, 0::1>>, value}
   end
 
@@ -196,6 +196,15 @@ defmodule ProbabilisticBookReview.QuotientFilter do
   to find the location of the first remainder for the bucket _f_q_,
   that is the actual start of the run _r_start_.
 
+  Returns `{r_start, r_end}` where:
+    - `r_start` is the index of bucket that is the start of the run for the canonical bucket index.
+      - expect it to fall on `f_q` OR later than that index.
+      - the bucket `r_start` lands on has following characteristics:
+        - `is_continuation` is 0, meaning it is the start of the run
+        - `is_shifted` can be 0 (if it is `f_q`) or 1 (if later than `f_q`)
+
+    - `r_end` is the index for next bucket that is empty.
+
   ## A "cluster":
   Sequence of one or more consecutive runs with no empty buckets.
   This shows these properties:
@@ -203,12 +212,12 @@ defmodule ProbabilisticBookReview.QuotientFilter do
     * `is_shifted` bit of its first value (ie. first bucket of cluster) is _never set_.
 
   ## Argument explanation
+    * `bucket_list`: Quotient filter
     * `f_q`: canonical bucet index _f_q_ of the quotient filter(`bucket_list`)
       - f_q is incremental, 0 to [whatever modulus was used] - 1
-    * `bucket_list`: Quotient filter
 
   """
-  def scan_for_run(f_q, bucket_list) do
+  def scan_for_run(bucket_list, f_q) do
     bucket_at_idx = bucket_at_bucket_list(bucket_list, f_q)
 
     r_start = get_start_of_cluster(bucket_at_idx, f_q, bucket_list)
