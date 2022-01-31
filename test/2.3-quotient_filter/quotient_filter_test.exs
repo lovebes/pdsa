@@ -61,6 +61,7 @@ defmodule ProbabilisticBookReview.QuotientFilterTest do
       assert init_bucket_list(3) |> length == 3
 
       assert init_bucket_list(8) |> Enum.all?(&(&1 |> elem(1) |> is_nil))
+      assert init_bucket_list(8) |> Enum.all?(&(&1 |> elem(0) == init_metadata))
     end
   end
 

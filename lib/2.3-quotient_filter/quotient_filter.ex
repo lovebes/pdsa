@@ -222,9 +222,9 @@ defmodule ProbabilisticBookReview.QuotientFilter do
 
     r_start = get_start_of_cluster(bucket_at_idx, f_q, bucket_list)
     idx = r_start
+    # now walk r_start and idx until idx reaches f_q,
+    # making r_start land on f_q (if run starts there) or go past it to get to the correct run belonging to f_q
 
-    # now walk r_start and idx until idx reaches f_q, makeing r_start land on f_q (if run starts there)
-    # or go past it to get to the correct run belonging to f_q
     r_start = walk_to_get_f_q_run_start(bucket_list, f_q, idx, r_start)
 
     r_end = r_start + 1
@@ -240,11 +240,18 @@ defmodule ProbabilisticBookReview.QuotientFilter do
   defp walk_to_get_f_q_run_start(bucket_list, f_q, idx, r_start) do
     r_start = r_start + 1
     r_start = to_next_run_start(bucket_at_bucket_list(bucket_list, r_start), r_start, bucket_list)
-
     idx = idx + 1
-    idx = to_next_canonical_bucket(bucket_at_bucket_list(bucket_list, idx), idx, bucket_list)
 
+    idx = to_next_canonical_bucket(bucket_at_bucket_list(bucket_list, idx), idx, bucket_list)
     walk_to_get_f_q_run_start(bucket_list, f_q, idx, r_start)
+  end
+
+  defp to_next_run_start({<<_::1, 0::1, _::1>>, _value}, r_start, _bucket_list) do
+    r_start
+  end
+
+  defp to_next_run_start(_, r_start, bucket_list) do
+    to_next_run_start(bucket_at_bucket_list(bucket_list, r_start + 1), r_start + 1, bucket_list)
   end
 
   defp to_next_canonical_bucket({<<1::1, _::2>>, _value}, idx, _bucket_list) do
@@ -253,14 +260,6 @@ defmodule ProbabilisticBookReview.QuotientFilter do
 
   defp to_next_canonical_bucket(_, idx, bucket_list) do
     to_next_canonical_bucket(bucket_at_bucket_list(bucket_list, idx + 1), idx + 1, bucket_list)
-  end
-
-  defp to_next_run_start({<<_::1, 0::1, _::0>>, _value}, r_start, _bucket_list) do
-    r_start
-  end
-
-  defp to_next_run_start(_, r_start, bucket_list) do
-    to_next_run_start(bucket_at_bucket_list(bucket_list, r_start + 1), r_start + 1, bucket_list)
   end
 
   defp get_start_of_cluster({<<_::2, 1::1>>, _value}, idx, bucket_list) do
